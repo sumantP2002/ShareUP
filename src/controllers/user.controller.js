@@ -1,3 +1,4 @@
+import { trusted } from "mongoose";
 import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -171,8 +172,56 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200 , {}, "User Logged Out Successfully"))
 })
 
+const refreshAccessToken = asyncHandler(async(req, res)=>{
+    try {
+        const incommingRefreshToken = req.cookies?.refreshToken;
+        if(!incommingRefreshToken){
+            throw new ApiError(400, "unauthorized access: Relogin")
+        }
+    
+        const decodedRefreshToken = jwt.verify(incommingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+    
+        const user = await User.findById(decodedRefreshToken._id);
+        if(!user){
+            throw new ApiError(400, "Refresh Token Not working")
+        }
+    
+        if(incommingRefreshToken !== user?.refreshToken){
+            throw new ApiError(400 , "Refresh token expired");
+        }
+    
+        const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id);
+        console.log(accessToken);
+        console.log(refreshToken)
+
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+        const updatedUser = await User.findById(user._id)
+    
+        return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(200,
+            {
+                updatedUser,
+                accessToken,
+                refreshToken
+            },
+            "Refresh token created successfully")
+        )
+    } catch (error) {
+        throw new ApiError(400, error?.message)
+    }
+
+})
+
 export {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    refreshAccessToken
  }
