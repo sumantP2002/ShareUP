@@ -6,7 +6,7 @@ import { User } from "../models/user.model.js";
 
 const JWTverify = asyncHandler( async (req, _ , next) => {
     try {
-        console.log(req.cookies);
+        // console.log(req.cookies);
         const token = req.cookies?.accessToken 
         // console.log(token);
         if(!token && typeof token !== 'string'){
@@ -14,7 +14,7 @@ const JWTverify = asyncHandler( async (req, _ , next) => {
         }
     
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-        console.log(decodedToken)
+        // console.log(decodedToken)
         const user = await User.findById(decodedToken._id).select("-password -refreshToken")
     
         if(!user){

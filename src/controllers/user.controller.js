@@ -3,7 +3,7 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadOnCloudinary } from "../utils/cloudnary.js";
+import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudnary.js";
 import jwt from "jsonwebtoken"
 
 const generateAccessAndRefreshToken = async(userId) => {
@@ -252,10 +252,80 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
 })
 
+const getCurrentUser = asyncHandler(async(req, res) => {
+    return res
+    .status(200)
+    .json(new ApiResponse(
+        200,
+        req.user,
+        "User fetched successfully"
+    ))
+})
+
+const updateAccountDetails = asyncHandler(async(req, res) => {
+    //firstName, email
+    const {firstName, email} = req.body
+
+    if(!firstName || !email){
+        throw new ApiError(400 , "All Feilds are required");
+    }
+
+    const user = await User.findByIdAndUpdate(req.user._id, 
+        {
+            $set: {
+                firstName, 
+                email
+            }
+        },
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200 , user , "Account details updated Successfully"))
+})
+
+const updateAvatar = asyncHandler(async (req, res) => {
+    const newAvatarLocalFilePath = req.file?.path
+    console.log(newAvatarLocalFilePath);
+    if(!newAvatarLocalFilePath){
+        throw new ApiResponse(400 , "Avatar Missing")
+    }
+    const user = await User.findById(req.user?._id);
+
+    const oldAvatarId = user.avatar;
+    console.log(oldAvatarId)
+    //deleted old avatar
+    //get publidId from url
+    const urlParts = oldAvatarId.split('/');
+    const fileName = urlParts[urlParts.length - 1];
+    const publicId = fileName.split('.')[0];
+    console.log(publicId);
+    await deleteFromCloudinary(publicId);
+
+    //upload on cloudinart
+    const newAvatarId = await uploadOnCloudinary(newAvatarLocalFilePath);
+    console.log(newAvatarId.url);
+    if(!newAvatarId){
+        throw new ApiError(400, "Avatar not uploade dto cloudinary")
+    }
+    user.avatar = newAvatarId.url;
+
+    await user.save({validateBeforeSave: true})
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, {user}, "Avatar Updated Successfully"))
+
+})
+
 export {
     registerUser,
     loginUser,
     logoutUser,
     refreshAccessToken,
-    changeCurrentPassword
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDetails,
+    updateAvatar
  }
