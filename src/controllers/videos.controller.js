@@ -14,7 +14,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     if(userId){
         filter.owner = userId
     }
-    
+
     const sort = {}
     sort[sortBy] = sortType === 'asc' ? 1 : -1;
 
@@ -85,8 +85,8 @@ const publishAVideo = asyncHandler(async(req, res) => {
 })
 
 const getVideoById = asyncHandler(async (req, res) => {
-    const { videoId } = req.params.videoId
-
+    const videoId = req.params.videoId
+    console.log(videoId);
     const video = await Video.findById(videoId);
 
     if(!video){
@@ -99,8 +99,8 @@ const getVideoById = asyncHandler(async (req, res) => {
 })
 
 const updateVideo = asyncHandler(async (req, res) => {
-    const { videoId } = req.params.videoId
-
+    const videoId = req.params.videoId
+    console.log(videoId)
     const {title, description} = req.body;
     if(!title || !description){
         throw new ApiError(400, "All feilds are required");
@@ -139,7 +139,7 @@ const updateVideo = asyncHandler(async (req, res) => {
 })
 
 const deleteVideo = asyncHandler(async (req, res) => {
-    const { videoId } = req.params.videoId
+    const videoId = req.params.videoId
 
     const video = await Video.findByIdAndDelete(videoId);
 
@@ -153,7 +153,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
 })
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
-    const {videoId} = req.params.videoId;
+    const videoId = req.params.videoId;
 
     const video = await Video.findById(videoId);
 
@@ -164,7 +164,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
         video.isPublished = true
     }
 
-    const videoNew = await Video.save({validateBeforeSave: false})
+    const videoNew = await video.save({validateBeforeSave: false})
 
     return res
     .status(200)
