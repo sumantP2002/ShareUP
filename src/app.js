@@ -22,4 +22,10 @@ app.use(express.static('public'));
 import userRoute from './routes/user.routes.js'
 app.use("/api/v1/users", userRoute);
 
+import subscriptionRoute from './routes/subscription.route.js'
+app.use('/api/v1/subscriptions', subscriptionRoute)
+
+import videoRoute from './routes/video.routes.js'
+app.use('/api/v1/videos', videoRoute);
+
 export { app }
